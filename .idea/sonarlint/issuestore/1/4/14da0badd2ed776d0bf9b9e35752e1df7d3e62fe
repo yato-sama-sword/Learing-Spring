@@ -1,0 +1,13 @@
+
+m
+java:S3776C"RRefactor this method to reduce its Cognitive Complexity from 34 to the 15 allowed.(à‡¶»ıÿÿÿÿ
+e
+java:S3252V"OUse static access with "cn.hutool.core.text.CharSequenceUtil" for "isNotEmpty".(çñİ
+b
+java:S3252W"LUse static access with "cn.hutool.core.text.CharSequenceUtil" for "isEmpty".(ôè‚†
+j
+java:S3252Y"OUse static access with "cn.hutool.core.text.CharSequenceUtil" for "lowerFirst".(·ªıÑüÿÿÿÿ
+b
+java:S3252f"LUse static access with "cn.hutool.core.text.CharSequenceUtil" for "isEmpty".(úÂãÔ
+j
+java:S3252l"OUse static access with "cn.hutool.core.text.CharSequenceUtil" for "isNotEmpty".(îÛâãıÿÿÿÿ

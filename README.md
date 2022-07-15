@@ -1,61 +1,63 @@
 # 项目前置介绍
 
->Spring的目的在于使JAVA EE开发更加容易，个人认为其核心在于IOC以及AOP。IOC是一种理念，将对象的创建权交给Spring，而AOP是一个模块，实现面向切面编程，比较接近一种动态增强。个人将着重IOC、AOP的相关功能进行实现。
+> Spring的目的在于使JAVA EE开发更加容易，个人认为其核心在于IOC以及AOP。IOC是一种理念，将对象的创建权交给Spring，而AOP是一个模块，实现面向切面编程，比较接近一种动态增强。个人将着重IOC、AOP的相关功能进行实现。
 
-## Spring FrameWork组件
+个人学习的Spring相关知识将放在[dailyNote仓库](https://github.com/yato-sama-sword/dailyNote/blob/main/my-spring.md)
 
->其实组件不止下述这些，没用到的没有提及。想快速了解可以看看[Spring FrameWork 5](https://pdai.tech/md/spring/spring-x-framework-introduce.html)专栏，鱼皮大大写的。想深入了解的话推荐看陈雄华老师在电子工业出版社出版的Spring有关书籍，讲的很细，日后希望可以详读。
+# 思路详解
 
-### Core Container（Spring核心容器）
+## 1.在容器中存储、获取Bean和BeanDefinition
 
-> 实现其他模块的基础，由Beans模块、Core核心模块、Context上下文模块和SpEL表达式语言模块组成。想在项目中实现AOP等功能必须仰赖于该模块。下面介绍一下SpEL模块外的三个模块
+> 采用map的方法保存Bean、BeanDefinition。在此基础上就需要先定义BeanDefinition，项目中的BeanDefinition只保留了Bean的Class信息。
 
-- **Beans 模块**：提供了框架的基础部分，包括控制反转和依赖注入。
-- **Core 核心模块**：封装了 Spring 框架的底层部分，包括资源访问、类型转换及一些常用工具类。
-- **Context 上下文模块**：建立在 Core 和 Beans 模块的基础之上，集成 Beans 模块功能并添加资源绑定、数据验证、国际化、Java EE 支持、容器生命周期、事件传播等。ApplicationContext 接口是上下文模块的焦点。
+在Spring源码中，DefaultListableBeanFactory通过直接或间接实现SingletonBeanRegistry、BeanFactory、BeanDefinitionRegistry接口来获取以上功能，项目中仿照这一形式进行，提供注册、获取Bean，注册、获取BeanDefinition的方法。
 
-### AOP
+## 2.实现Bean的生命周期
 
-> 提供了面向切面编程实现，提供比如日志记录、权限控制、性能统计等通用功能和业务逻辑分离的技术，并且能动态的把这些功能添加到需要的代码中，这样各司其职，降低业务逻辑和通用功能的耦合。
+> 一般来说要使得Bean可以使用需要经历实例化、属性赋值、初始化、销毁的过程。此中过程在调用Bean自身方法的基础上，还需要进行BeanPostProcessor以及Aware接口的增强处理。
 
-### Aspects
+这里简单讲讲实例化、属性赋值、初始化的过程
 
-> 提供与 AspectJ 的集成，是一个功能强大且成熟的面向切面编程（AOP）框架。（和Spring AOP实现上没有关系，只是Spring可以集成AspectJ，使用相关方法）
+1. 实例化：类似于调用了无参构造函数，只开辟了内存空间，但是没有存储真实的数据
 
-## IOC
+2. 属性赋值：向Bean对象的属性注入真实的数据
 
->控制反转，反转的是依赖对象的获取。由容器创建对象并且进行管理（在合适的时候注入），取代了本来由我们自己创建获取对象的操作。在Spring Boot中使用@Autowired注解就搞定对象注入，在项目中得深入看看背后的过程了。
+3. 初始化：进行动态增强（其实属性赋值也可以属于初始化的一部分，只是分开逻辑会更清晰）
 
-### 配置方式
+4. 销毁：GC—对象、卸载—类
 
-1. xml配置：挺麻烦的，创建xml文件声明命名空间和配置bean，bean多的话能配十万八千行，但是适用于任何场景
-2. Java配置：声明一个Config类，注解`@Configuration`，在方法中注解@Bean创建对应实例并返回。同样适用于任何场景，但是大量配置可读性就比较差
-3. **注解配置：**简单易用，打个注解就行，但是较之于前两种方法，不能适用于所有场景，通常情况下采用这种方法
+### 2.1.实例化策略
 
-### 依赖注入方式
+> 如何进行Bean的实例化？对应JVM的类加载过程，Bean的实例化应该可以看作是初始、验证、准备、解析、初始化的一整套流程。选取反射和Cglib动态代理的方法
 
-1. 构造方法注入：正如其名，在调用构造函数时，实现依赖对象的注入
-2. setter注入：正如其名，使用set方法实现依赖对象注入
-3. 注解注入：使用`@Autowired`注解进行注入
+在Spring源码中有InstantiationStrategy接口来对实例化策略进行一个规范，项目中实现两个实现类，一个使用反射调用无参构造函数，而另一个采用Cglib动态代理反射生成。
 
-官方推荐构造方法注入，既保证注入组件不可变，又确保需要的依赖不为空，这里就得看下具体的注入方法了
+### 2.2.属性赋值
 
-```java
-@Service
+> 想要动态的修改属性的值，可以很迅速的联想到反射。但是这里引申出一些问题，属性值从哪里获取（或者说资源文件要怎么读取）；著名循环依赖问题怎么解决。
 
-public class ServiceImpl {
-    
-    private final DaoImpl daoImpl;
-    
-    public ServiceImpl (final DaoImpl daoImpl) {
-		this.daoImpl = daoImpl;
-	}
-}
+1. 考虑属性赋值本身，使用反射就可以简单实现，这里我选择调用hutool中的BeanUtil中的setFeildValue方法，其实质就是通过反射来修改属性值
 
-```
+2. 考虑资源获取，Spring提供Resource接口，提供资源的抽象和访问功能，实现文件系统资源、classpath下资源、java.net.URL资源进行定位的实现类；ResourceLoader接口提供资源查找定位策略的抽象，Spring中的DefaultResourceLoader类是该接口的默认实现类。此外需要指出，一般bean的配置是在xml文件中进行的，所以我们要提供在xml文件中操纵bean的相关方法。BeanDefinitionReader是Spring定义的读取bean元信息的抽象接口，xmlBeanDefinitionReader则是从xml文件中读取的实现类，并且负责将有关BeanDefinition注册到容器中。
 
-1. final保证依赖对象是不可变的
-2. 由于实现有参构造函数，就必须传入对应参数才能构造对象
-3. 可以获取原始对象，即构造方法创建出来的对象
-4. 可以解决循环依赖问题，采用构造方法注入时。spring项目启动会抛出：BeanCurrentlyInCreationException：Requested bean is currently in creation: Is there an unresolvable circular reference？从而提醒你避免循环依赖
+3. 考虑循环依赖，这一点毕竟复杂后面单独再说
 
+## 2.3.初始化
+
+> Bean的初始化完成意味着可以正式的使用Bean，在初始化过程中既可以使用定义好的Bean自身的相关方法，也可以使用BeanPostProcessor进行动态增强，
+
+BeanFactoryPostProcessor允许在bean实例化之前修改BeanDefinition信息，严格上不算初始化这一章的，但是提一下可以和BeanPostProcessor作对比
+
+BeanPostProcessor可以在bean实例化后修改或替换bean，有两个实现方法，前者可以在初始化方法前执行，后者可以在初始化方法后执行
+
+项目中实现ApplicationContext在xml文件中配置有关接口，避免手动添加。
+
+# 3.考虑增强功能具体实现
+
+> 在前面也提过一嘴BeanFactoryPostProcessor、BeanPostProcessor、Aware等接口的实现。具体怎么实现，有哪些功能上的提升？此节细说！
+
+
+
+# 杂项
+
+1. 从xml文件中读取信息为String类型，需要实现类型转换的功能
