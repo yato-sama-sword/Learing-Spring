@@ -7,6 +7,7 @@ package edu.neu.spring.beans.factory.config;
  * 其直接的实现类为DefaultSingletonBeanRegistry
  * @author yato
  */
+
 public interface SingletonBeanRegistry {
 
     /**

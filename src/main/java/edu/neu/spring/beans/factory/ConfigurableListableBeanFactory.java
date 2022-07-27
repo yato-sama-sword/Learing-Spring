@@ -27,9 +27,7 @@ public interface ConfigurableListableBeanFactory extends ListableBeanFactory, Au
 
     /**
      *  注册BeanPostProcessor
-     *
      * @param beanPostProcessor beanPostProcessor
      */
     void addBeanPostProcessor(BeanPostProcessor beanPostProcessor);
-
 }

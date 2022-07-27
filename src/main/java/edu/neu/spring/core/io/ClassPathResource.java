@@ -18,6 +18,7 @@ public class ClassPathResource implements Resource {
 
     @Override
     public InputStream getInputStream() throws IOException {
+        // 通过ClassLoader读取ClassPath下的文件信息
         InputStream inputStream = this.getClass().getClassLoader().getResourceAsStream(this.path);
         if (inputStream == null) {
             throw new FileNotFoundException(this.path + " does not exist");

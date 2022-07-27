@@ -3,7 +3,6 @@ package edu.neu.spring.beans.factory.support;
 import edu.neu.spring.beans.BeansException;
 import edu.neu.spring.beans.factory.ConfigurableListableBeanFactory;
 import edu.neu.spring.beans.factory.config.BeanDefinition;
-import edu.neu.spring.beans.factory.config.BeanPostProcessor;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -11,7 +10,7 @@ import java.util.Set;
 
 /**
  * 集大成者，实现BeanFactory、BeanDefinitionRegistry、SingletonBeanRegistry等等接口
- * 一般是对外提供的Factory
+ * 一般是对外提供的Factory，核心类实现
  * @author yato
  */
 public class DefaultListableBeanFactory extends AbstractAutowireCapableBeanFactory implements
@@ -35,12 +34,13 @@ public class DefaultListableBeanFactory extends AbstractAutowireCapableBeanFacto
 
     @Override
     public <T> Map<String, T> getBeansOfType(Class<T> type) throws BeansException {
-        Map<String, T> result = new HashMap<>();
+        Map<String, T> result = new HashMap<>(16);
         beanDefinitions.forEach((beanName, beanDefinition) -> {
-            Class beanClass = beanDefinition.getBeanClass();
+            Class<?> beanClass = beanDefinition.getBeanClass();
             // 该方法判断type是否是beanClass的父类
             if (type.isAssignableFrom(beanClass)) {
-                T bean = (T) getBean(beanName);
+                // 直接返回T类型的bean
+                T bean = getBean(beanName, type);
                 result.put(beanName, bean);
             }
         });
@@ -50,7 +50,7 @@ public class DefaultListableBeanFactory extends AbstractAutowireCapableBeanFacto
     @Override
     public String[] getBeanDefinitionNames() {
         Set<String> beanNames = beanDefinitions.keySet();
-        return beanNames.toArray(new String[beanNames.size()]);
+        return beanNames.toArray(new String[0]);
     }
 
 

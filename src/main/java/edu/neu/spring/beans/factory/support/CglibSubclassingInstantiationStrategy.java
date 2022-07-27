@@ -1,13 +1,11 @@
 package edu.neu.spring.beans.factory.support;
 
+import javax.annotation.Nullable;
 import edu.neu.spring.beans.BeansException;
 import edu.neu.spring.beans.factory.config.BeanDefinition;
-import net.sf.cglib.proxy.Callback;
-import net.sf.cglib.proxy.Enhancer;
-import net.sf.cglib.proxy.MethodInterceptor;
-import net.sf.cglib.proxy.MethodProxy;
+import net.sf.cglib.proxy.*;
 
-import java.lang.reflect.Method;
+import java.lang.reflect.Constructor;
 
 /**
  * cglib动态代理实例化类，生成子类实现
@@ -16,16 +14,23 @@ import java.lang.reflect.Method;
 public class CglibSubclassingInstantiationStrategy implements InstantiationStrategy {
 
     @Override
-    public Object instantiate(BeanDefinition beanDefinition) throws BeansException {
+    public Object instantiate(BeanDefinition beanDefinition, @Nullable Object[] args) throws BeansException {
         // enhancer是字节码增强器，感觉和Proxy类挺像的
         Enhancer enhancer = new Enhancer();
         enhancer.setSuperclass(beanDefinition.getBeanClass());
-        // 通过MethodInterceptor调用
-        MethodInterceptor methodInterceptor = (o, method, objects, methodProxy) -> {
-            methodProxy.invokeSuper(o, objects);
-            return o;
-        };
-        enhancer.setCallback(methodInterceptor);
-        return enhancer.create();
+        // NoOp和MethodInterceptor的区别记在笔记中
+        enhancer.setCallback(new NoOp() {
+        });
+        if (args == null) {
+            return enhancer.create();
+        } else {
+            for (Constructor<?> ctor : beanDefinition.getBeanClass().getDeclaredConstructors()) {
+                if (ctor.getParameterTypes().length == args.length) {
+                    return enhancer.create(ctor.getParameterTypes(), args);
+                }
+            }
+        }
+        // 如果参数不为空，又找不到构造方法
+        throw new BeansException("Constructor not found");
     }
 }

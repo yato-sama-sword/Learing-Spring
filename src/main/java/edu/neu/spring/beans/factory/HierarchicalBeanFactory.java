@@ -5,4 +5,5 @@ package edu.neu.spring.beans.factory;
  * @author yato
  */
 public interface HierarchicalBeanFactory extends BeanFactory {
+    // 待填充
 }

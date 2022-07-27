@@ -19,8 +19,16 @@ public interface BeanFactory {
     Object getBean(String beanName) throws BeansException;
 
     /**
+     * 带参数的bean实例化
+     * @param beanName bean名
+     * @param args bean的属性
+     * @return bean实例
+     * @throws BeansException bean相关异常
+     */
+    Object getBean(String beanName, Object...args) throws BeansException;
+
+    /**
      * 根据名称和类型查找bean
-     *
      * @param name bean名称
      * @param requiredType bean的类型
      * @param <T> 相较于Object，接收参数时不需要进行强制转换

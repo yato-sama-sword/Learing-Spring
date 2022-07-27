@@ -5,7 +5,7 @@ import edu.neu.spring.beans.BeansException;
 import java.util.Map;
 
 /**
- * 处理List类Bean
+ * 处理Bean
  * @author yato
  */
 public interface ListableBeanFactory extends BeanFactory{
