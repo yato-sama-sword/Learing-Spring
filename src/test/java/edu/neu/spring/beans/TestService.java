@@ -1,11 +1,16 @@
 package edu.neu.spring.beans;
 
-import edu.neu.spring.beans.factory.DisposableBean;
-import edu.neu.spring.beans.factory.InitializingBean;
+import cn.hutool.json.JSONUtil;
+import edu.neu.spring.beans.factory.*;
+import edu.neu.spring.context.ApplicationContext;
+import edu.neu.spring.context.ApplicationContextAware;
 import lombok.extern.slf4j.Slf4j;
 
 @Slf4j
-public class TestService implements InitializingBean, DisposableBean {
+public class TestService implements InitializingBean, DisposableBean, BeanFactoryAware, BeanClassLoaderAware, BeanNameAware, ApplicationContextAware {
+
+    private ApplicationContext applicationContext;
+    private BeanFactory beanFactory;
 
     private int id;
     private String name;
@@ -24,4 +29,31 @@ public class TestService implements InitializingBean, DisposableBean {
         return testDao.queryTestName(id);
     }
 
+    @Override
+    public void setBeanClassLoader(ClassLoader classLoader) {
+        log.info("ClassLoader: " + JSONUtil.toJsonStr(classLoader));
+    }
+
+    @Override
+    public void setBeanFactory(BeanFactory beanFactory) throws BeansException {
+        this.beanFactory = beanFactory;
+    }
+
+    @Override
+    public void setBeanName(String beanName) {
+        log.info("BeanName is: " + beanName);
+    }
+
+    @Override
+    public void setApplicationContext(ApplicationContext applicationContext) throws BeansException {
+        this.applicationContext = applicationContext;
+    }
+
+    public ApplicationContext getApplicationContext() {
+        return applicationContext;
+    }
+
+    public BeanFactory getBeanFactory() {
+        return beanFactory;
+    }
 }

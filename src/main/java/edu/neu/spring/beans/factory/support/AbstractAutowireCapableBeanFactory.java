@@ -6,17 +6,11 @@ import javax.annotation.Nullable;
 
 import cn.hutool.core.lang.Assert;
 import cn.hutool.core.text.CharSequenceUtil;
-import cn.hutool.core.util.StrUtil;
 import edu.neu.spring.beans.BeansException;
 import edu.neu.spring.beans.PropertyValue;
-import edu.neu.spring.beans.factory.DisposableBean;
-import edu.neu.spring.beans.factory.InitializingBean;
-import edu.neu.spring.beans.factory.config.AutowireCapableBeanFactory;
-import edu.neu.spring.beans.factory.config.BeanDefinition;
-import edu.neu.spring.beans.factory.config.BeanPostProcessor;
-import edu.neu.spring.beans.factory.config.BeanReference;
+import edu.neu.spring.beans.factory.*;
+import edu.neu.spring.beans.factory.config.*;
 
-import java.lang.reflect.Constructor;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 
@@ -38,37 +32,63 @@ public abstract class AbstractAutowireCapableBeanFactory extends AbstractBeanFac
     }
 
     protected Object doCreateBean(String beanName, BeanDefinition beanDefinition, @Nullable Object[] args) throws BeansException {
-        Class<?> beanClass = beanDefinition.getBeanClass();
-        Object bean = null;
+        Object bean;
         try {
-            if (args == null) {
-                // bean类实例化(能来这里都是无参构造，方法执行完尚未赋值啥的)
-                bean = instantiationStrategy.instantiate(beanDefinition, null);
-            } else {
-                // 找到bean对应的构造器并进行初始化
-                Constructor<?>[] constructors = beanClass.getDeclaredConstructors();
-                for (Constructor<?> ctor : constructors) {
-                    if (ctor.getParameterTypes().length == args.length) {
-                        bean = instantiationStrategy.instantiate(beanDefinition, args);
-                    }
-                }
-                if (bean == null) {
-                    throw new BeansException("Constructor not found");
-                }
+            // 判断是否返回代理 Bean 对象
+            bean = resolveBeforeInstantiation(beanName, beanDefinition);
+            if (null != bean) {
+                return bean;
             }
-            // 为bean填充属性
-            applyPropertyValues(beanName, bean, beanDefinition);
-            // bean对象实例化
-            bean = initializeBean(beanName, bean, beanDefinition);
+            // 构造方法参数为空就直接实例化，不为空就找到对应构造器进行实例化
+            bean = instantiationStrategy.instantiate(beanDefinition, args);
         } catch (Exception e) {
             throw new BeansException("Instantiation of bean failed", e);
         }
-        addSingleton(beanName, bean);
+
+        // 为bean填充属性
+        applyPropertyValues(beanName, bean, beanDefinition);
+
+        // 初始化
+        bean = initializeBean(beanName, bean, beanDefinition);
+
+        // 注册实现DisposableBean接口的Bean对象
+        registerDisposableBeanIfNecessary(beanName, bean, beanDefinition);
+
+        // 判断是否为单例Bean
+        if (beanDefinition.isSingleton()) {
+            // addSingleton是要放入缓存里
+            registerSingleton(beanName, bean);
+        }
         return bean;
     }
 
+    protected Object resolveBeforeInstantiation(String beanName, BeanDefinition beanDefinition) {
+        Object bean = applyBeanPostProcessorsBeforeInstantiation(beanDefinition.getBeanClass(), beanName);
+        if (null != bean) {
+            bean = applyBeanPostProcessorsAfterInitialization(bean, beanName);
+        }
+        return bean;
+    }
+
+    protected Object applyBeanPostProcessorsBeforeInstantiation(Class<?> beanClass, String beanName) {
+        for (BeanPostProcessor beanPostProcessor : getBeanPostProcessors()) {
+            if (beanPostProcessor instanceof InstantiationAwareBeanPostProcessor) {
+                Object result = ((InstantiationAwareBeanPostProcessor) beanPostProcessor).postProcessBeforeInstantiation(beanClass, beanName);
+                if (null != result) {
+                    return result;
+                }
+            }
+        }
+        return null;
+    }
+
     protected void registerDisposableBeanIfNecessary(String beanName, Object bean, BeanDefinition beanDefinition) {
-        if (bean instanceof DisposableBean || StrUtil.isNotEmpty(beanDefinition.getDestroyMethodName())) {
+        // 非Singleton类型Bean不销毁
+        if (!beanDefinition.isSingleton()) {
+            return;
+        }
+
+        if (bean instanceof DisposableBean || CharSequenceUtil.isNotEmpty(beanDefinition.getDestroyMethodName())) {
             registerDisposableBean(beanName, new DisposableBeanAdapter(bean, beanName, beanDefinition));
         }
     }
@@ -98,9 +118,22 @@ public abstract class AbstractAutowireCapableBeanFactory extends AbstractBeanFac
     }
 
     protected Object initializeBean(String beanName, Object bean, BeanDefinition beanDefinition) {
-        //执行BeanPostProcessor的前置处理
-        Object wrappedBean = applyBeanPostProcessorsBeforeInitialization(bean, beanName);
+        // 判断bean是否实现Aware接口
+        if (bean instanceof Aware) {
+            if (bean instanceof BeanFactoryAware) {
+                ((BeanFactoryAware) bean).setBeanFactory(this);
+            }
+            if (bean instanceof BeanClassLoaderAware) {
+                // 获取当前的BeanClassLoader
+                ((BeanClassLoaderAware) bean).setBeanClassLoader(getBeanClassLoader());
+            }
+            if (bean instanceof BeanNameAware) {
+                ((BeanNameAware) bean).setBeanName(beanName);
+            }
+        }
 
+        //1.执行BeanPostProcessor的前置处理
+        Object wrappedBean = applyBeanPostProcessorsBeforeInitialization(bean, beanName);
         // 执行bean的初始化方法
         try {
             invokeInitMethods(beanName, wrappedBean, beanDefinition);
@@ -109,9 +142,7 @@ public abstract class AbstractAutowireCapableBeanFactory extends AbstractBeanFac
         } catch (InvocationTargetException | IllegalAccessException e) {
             throw new BeansException("Could not find an init method named on bean with name '" + beanName + "'", e);
         }
-        // 注册实现DisposableBean接口的Bean对象
-        registerDisposableBeanIfNecessary(beanName, bean, beanDefinition);
-        //执行BeanPostProcessor的后置处理
+        //2.执行BeanPostProcessor的后置处理
         wrappedBean = applyBeanPostProcessorsAfterInitialization(bean, beanName);
         return wrappedBean;
     }

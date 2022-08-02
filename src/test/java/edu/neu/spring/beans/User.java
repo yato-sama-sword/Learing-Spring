@@ -3,11 +3,6 @@ package edu.neu.spring.beans;
 
 import java.util.Objects;
 
-/**
- * @author yato
- */
-
-
 public class User {
     private int age;
     private String name;

@@ -2,9 +2,11 @@ package edu.neu.spring.beans.factory.support;
 
 import javax.annotation.Nullable;
 import edu.neu.spring.beans.BeansException;
+import edu.neu.spring.beans.factory.FactoryBean;
 import edu.neu.spring.beans.factory.config.BeanDefinition;
 import edu.neu.spring.beans.factory.config.BeanPostProcessor;
 import edu.neu.spring.beans.factory.config.ConfigurableBeanFactory;
+import edu.neu.spring.utils.ClassUtil;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -13,9 +15,10 @@ import java.util.List;
  * 抽象类定义模板方法
  * @author yato
  */
-public abstract class AbstractBeanFactory extends DefaultSingletonBeanRegistry implements ConfigurableBeanFactory {
+public abstract class AbstractBeanFactory extends FactoryBeanRegistrySupport implements ConfigurableBeanFactory {
 
 
+    private ClassLoader beanClassLoader = ClassUtil.getDefaultClassLoader();
     private final List<BeanPostProcessor> beanPostProcessors = new ArrayList<>();
 
     /**
@@ -58,16 +61,40 @@ public abstract class AbstractBeanFactory extends DefaultSingletonBeanRegistry i
         this.beanPostProcessors.add(beanPostProcessor);
     }
 
-    public Object doGetBean(String beanName, @Nullable Object[] args) {
-        Object bean = getSingleton(beanName);
+    public Object doGetBean(final String beanName, @Nullable final Object[] args) {
+        Object sharedInstance = getSingleton(beanName);
         // 缓存中有bean，或者说bean已创建
-        if (bean != null) {
-            return bean;
+        if (sharedInstance != null) {
+            return getObjectForBeanInstance(sharedInstance, beanName);
         }
         BeanDefinition beanDefinition = getBeanDefinition(beanName);
-        return createBean(beanName, beanDefinition, args);
+        Object bean = createBean(beanName, beanDefinition, args);
+        // 调用此方法以区分获取FactoryBean和其他Bean
+        return getObjectForBeanInstance(bean, beanName);
     }
+
+    /**
+     * 获取FactoryBean对象
+     * @param beanInstance
+     * @param beanName
+     * @return
+     */
+    private Object getObjectForBeanInstance(Object beanInstance, String beanName) {
+        if (!(beanInstance instanceof FactoryBean)) {
+            return beanInstance;
+        }
+        Object factoryBean= getCachedObjectForFactoryBean(beanName);
+        if (factoryBean == null) {
+            factoryBean = getObjectFromFactoryBean((FactoryBean<?>) beanInstance, beanName);
+        }
+        return factoryBean;
+    }
+
     public List<BeanPostProcessor> getBeanPostProcessors() {
         return this.beanPostProcessors;
+    }
+
+    public ClassLoader getBeanClassLoader() {
+        return beanClassLoader;
     }
 }

@@ -8,11 +8,7 @@ import edu.neu.spring.beans.BeansException;
  * @author yato
  */
 public class ClassPathXmlApplicationContext extends AbstractXmlApplicationContext {
-
-    private String[] configLocations;
-
-    public ClassPathXmlApplicationContext() {
-    }
+    private final String[] configLocations;
 
     /**
      * 从XML中加载BeanDefinition，并刷新上下文
