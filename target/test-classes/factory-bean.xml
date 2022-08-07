@@ -1,9 +1,0 @@
-<?xml version="1.0" encoding="UTF-8"?>
-<beans>
-    <bean id="userService" class="edu.neu.spring.beans.UserService" scope="prototype">
-        <property name="id" value="9527"/>
-        <property name="name" value="zyu"/>
-        <property name="userDao" ref="proxyTestDao"/>
-    </bean>
-    <bean id="proxyTestDao" class="edu.neu.spring.beans.UserDaoProxyBeanFactory"/>
-</beans>

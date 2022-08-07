@@ -1,6 +1,0 @@
-<?xml version="1.0" encoding="UTF-8"?>
-<beans>
-    <bean class="edu.neu.spring.event.ContextRefreshedEventListener"/>
-    <bean class="edu.neu.spring.event.CustomEventListener"/>
-    <bean class="edu.neu.spring.event.ContextClosedEventListener"/>
-</beans>

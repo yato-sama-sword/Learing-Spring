@@ -30,4 +30,12 @@ public class MethodBeforeAdviceInterceptor implements MethodInterceptor {
         // proceed就是执行方法
         return methodInvocation.proceed();
     }
+
+    public MethodBeforeAdvice getAdvice() {
+        return advice;
+    }
+
+    public void setAdvice(MethodBeforeAdvice advice) {
+        this.advice = advice;
+    }
 }

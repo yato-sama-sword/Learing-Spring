@@ -6,7 +6,9 @@ import edu.neu.spring.beans.factory.FactoryBean;
 import edu.neu.spring.beans.factory.config.BeanDefinition;
 import edu.neu.spring.beans.factory.config.BeanPostProcessor;
 import edu.neu.spring.beans.factory.config.ConfigurableBeanFactory;
+import edu.neu.spring.core.convert.ConversionService;
 import edu.neu.spring.utils.ClassUtil;
+import edu.neu.spring.utils.StringValueResolver;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -18,8 +20,14 @@ import java.util.List;
 public abstract class AbstractBeanFactory extends FactoryBeanRegistrySupport implements ConfigurableBeanFactory {
 
 
-    private ClassLoader beanClassLoader = ClassUtil.getDefaultClassLoader();
+    private final ClassLoader beanClassLoader = ClassUtil.getDefaultClassLoader();
     private final List<BeanPostProcessor> beanPostProcessors = new ArrayList<>();
+    /**
+     * 处理配置信息
+     */
+    private final List<StringValueResolver> embeddedValueResolvers = new ArrayList<>();
+
+    private ConversionService conversionService;
 
     /**
      * 获取bean的元信息
@@ -51,7 +59,8 @@ public abstract class AbstractBeanFactory extends FactoryBeanRegistrySupport imp
 
     @Override
     public <T> T getBean(String name, Class<T> requiredType) throws BeansException {
-        return ((T) getBean(name));
+        // 使用cast避免不安全转换
+        return requiredType.cast(getBean(name));
     }
 
     @Override
@@ -61,10 +70,25 @@ public abstract class AbstractBeanFactory extends FactoryBeanRegistrySupport imp
         this.beanPostProcessors.add(beanPostProcessor);
     }
 
+    @Override
+    public void addEmbeddedValueResolver(StringValueResolver valueResolver) {
+        this.embeddedValueResolvers.add(valueResolver);
+    }
+
+    @Override
+    public String resolveEmbeddedValue(String value) {
+        String result = value;
+        for (StringValueResolver resolver : this.embeddedValueResolvers) {
+            result = resolver.resolveStringValue(result);
+        }
+        return result;
+    }
+
     public Object doGetBean(final String beanName, @Nullable final Object[] args) {
         Object sharedInstance = getSingleton(beanName);
         // 缓存中有bean，或者说bean已创建
         if (sharedInstance != null) {
+            // 如果是 FactoryBean，则需要调用 FactoryBean#getObject
             return getObjectForBeanInstance(sharedInstance, beanName);
         }
         BeanDefinition beanDefinition = getBeanDefinition(beanName);
@@ -75,9 +99,9 @@ public abstract class AbstractBeanFactory extends FactoryBeanRegistrySupport imp
 
     /**
      * 获取FactoryBean对象
-     * @param beanInstance
-     * @param beanName
-     * @return
+     * @param beanInstance bean实例
+     * @param beanName bean名
+     * @return 获取factoryBean
      */
     private Object getObjectForBeanInstance(Object beanInstance, String beanName) {
         if (!(beanInstance instanceof FactoryBean)) {
@@ -96,5 +120,16 @@ public abstract class AbstractBeanFactory extends FactoryBeanRegistrySupport imp
 
     public ClassLoader getBeanClassLoader() {
         return beanClassLoader;
+    }
+
+    @Override
+    public void setConversionService(ConversionService conversionService) {
+        this.conversionService = conversionService;
+    }
+
+    @Nullable
+    @Override
+    public ConversionService getConversionService() {
+        return conversionService;
     }
 }

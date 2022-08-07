@@ -1,0 +1,25 @@
+
+s
+java:S11922"^Define a constant instead of duplicating this literal "Target class must not be null" 3 times.(·óîK
+g
+java:S2259™"K"NullPointerException" will be thrown when invoking method "isHexNumber()".(şîïûøÿÿÿÿ
+g
+java:S2259œ"K"NullPointerException" will be thrown when invoking method "isHexNumber()".(ª‘Óıÿÿÿÿ
+g
+java:S2259“"K"NullPointerException" will be thrown when invoking method "isHexNumber()".(ŠÉ€Ìùÿÿÿÿ
+g
+java:S2259–"K"NullPointerException" will be thrown when invoking method "isHexNumber()".(ÔÒ¸¯ùÿÿÿÿ
+b
+java:S2259"K"NullPointerException" will be thrown when invoking method "isHexNumber()".(Œê¼±
+P
+java:S1118":Add a private constructor to hide the implicit public one.(âòÆ±
+m
+java:S3776."RRefactor this method to reduce its Cognitive Complexity from 22 to the 15 allowed.(ùøÓ¢ùÿÿÿÿ
+M
+java:S1172k"2Remove this unused method parameter "targetClass".(ö¸¶ñşÿÿÿÿ
+n
+java:S3776‹"RRefactor this method to reduce its Cognitive Complexity from 20 to the 15 allowed.(‹¡Ìµüÿÿÿÿ
+G
+java:S1068",Remove this unused "LONG_MIN" private field.(ÎÀŞÆøÿÿÿÿ
+G
+java:S1068",Remove this unused "LONG_MAX" private field.(‰÷á¼ÿÿÿÿÿ

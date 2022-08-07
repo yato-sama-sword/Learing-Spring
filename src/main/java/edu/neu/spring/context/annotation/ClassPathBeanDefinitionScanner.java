@@ -2,6 +2,7 @@ package edu.neu.spring.context.annotation;
 
 
 import cn.hutool.core.text.CharSequenceUtil;
+import edu.neu.spring.beans.factory.annotation.AutowiredAnnotationBeanPostProcessor;
 import edu.neu.spring.beans.factory.config.BeanDefinition;
 import edu.neu.spring.beans.factory.support.BeanDefinitionRegistry;
 import edu.neu.spring.stereotype.Component;
@@ -33,6 +34,10 @@ public class ClassPathBeanDefinitionScanner extends ClassPathScanningCandidateCo
                 registry.registerBeanDefinition(determineBeanName(beanDefinition), beanDefinition);
             }
         }
+        // 注册处理注解的BeanPostProcessor
+        registry.registerBeanDefinition("edu.neu.spring.context.annotation.internalAutowiredAnnotationProcessor",
+                new BeanDefinition(AutowiredAnnotationBeanPostProcessor.class));
+
     }
 
     private String resolveBeanScope(BeanDefinition beanDefinition) {

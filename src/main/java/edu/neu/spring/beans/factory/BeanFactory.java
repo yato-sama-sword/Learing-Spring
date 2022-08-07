@@ -36,4 +36,14 @@ public interface BeanFactory {
      * @throws BeansException bean相关异常
      */
     <T> T getBean(String name, Class<T> requiredType) throws BeansException;
+
+    /**
+     * 根据类型查找bean
+     * @param requiredType bean的类型
+     * @param <T> 相较于Object，接收参数时不需要进行强制转换
+     * @return 返回bean实例
+     * @throws BeansException bean相关异常
+     */
+    <T> T getBean(Class<T> requiredType) throws BeansException;
+
 }

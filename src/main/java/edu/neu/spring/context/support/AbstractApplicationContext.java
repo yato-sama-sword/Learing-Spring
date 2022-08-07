@@ -1,6 +1,5 @@
 package edu.neu.spring.context.support;
 
-import cn.hutool.json.JSONUtil;
 import edu.neu.spring.beans.BeansException;
 import edu.neu.spring.beans.factory.ConfigurableListableBeanFactory;
 import edu.neu.spring.beans.factory.config.BeanFactoryPostProcessor;
@@ -49,8 +48,6 @@ public abstract class AbstractApplicationContext extends DefaultResourceLoader i
         // 9.发布容器刷新完成事件
         finishRefresh();
     }
-
-
 
     /**
      * 创建beanFactory，加载beanDefinition
@@ -112,6 +109,11 @@ public abstract class AbstractApplicationContext extends DefaultResourceLoader i
     @Override
     public <T> T getBean(String name, Class<T> requiredType) throws BeansException {
         return getBeanFactory().getBean(name, requiredType);
+    }
+
+    @Override
+    public <T> T getBean(Class<T> requiredType) throws BeansException {
+        return getBeanFactory().getBean(requiredType);
     }
 
     @Override

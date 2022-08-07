@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<beans xmlns="http://www.springframework.org/schema/beans"
+       xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+       xsi:schemaLocation="http://www.springframework.org/schema/beans
+	         http://www.springframework.org/schema/beans/spring-beans.xsd">
+
+    <bean id="schoolClass" class="edu.neu.spring.test.bean.SchoolClass">
+        <property name="className" value="你猜"/>
+        <property name="inClassDate" value="2022-08-07"/>
+    </bean>
+
+    <bean id="conversionService" class="edu.neu.spring.context.support.ConversionServiceFactoryBean">
+        <property name="converters" ref="converters"/>
+    </bean>
+
+    <bean id="converters" class="edu.neu.spring.test.converter.ConvertersFactoryBean"/>
+
+</beans>
