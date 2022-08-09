@@ -32,7 +32,8 @@ public abstract class AbstractAutowireCapableBeanFactory extends AbstractBeanFac
 
     @Override
     protected Object createBean(String beanName, BeanDefinition beanDefinition, @Nullable Object[] args) throws BeansException {
-        // 判断是否返回代理 Bean 对象
+        // 判断是否返回代理Bean对象，例如 RPC 远程调用的实现，可以通过这种方式进行拦截
+        // 目前默认返回的是null，方法是不会执行嘚！
         Object bean = resolveBeforeInstantiation(beanName, beanDefinition);
         if (null != bean) {
             return bean;
@@ -93,7 +94,6 @@ public abstract class AbstractAutowireCapableBeanFactory extends AbstractBeanFac
                 }
             }
         }
-
         return exposedObject;
     }
 
